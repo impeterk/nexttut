@@ -1,11 +1,13 @@
 import AcmeLogo from '@/app/ui/acme-logo';
 import RegisterForm from '@/app/ui/register-form';
-import {Metadata} from 'next'
+import { Metadata } from 'next';
 
-export const metadata:Metadata = {
-  title: 'Login'
-}
- 
+export const dynamic = 'force-dynamic';
+
+export const metadata: Metadata = {
+  title: 'Register',
+};
+
 export default function RegisterPage() {
   return (
     <main className="flex items-center justify-center md:h-screen">

@@ -99,32 +99,34 @@ export async function authenticate(
   }
 }
 
+const UserSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(6),
+  name: z.string(),
+});
+
 export async function registerUser(
   prevState: string | undefined,
   formData: FormData,
 ) {
   try {
-    const parsedData = z
-      .object({ email: z.string().email(), password: z.string().min(6) })
-      .safeParse({
-        email: formData.get('email'),
-        password: formData.get('password'),
-      });
+    const parsedData = UserSchema.safeParse({
+      email: formData.get('email'),
+      password: formData.get('password'),
+      name: formData.get('name'),
+    });
     if (parsedData.success) {
-      const { email, password } = parsedData.data;
+      const { email, password, name } = parsedData.data;
       const user = await getUser(email);
-      if (user) return 'Email already used';
-
+      if (user) return 'Email is already being used';
       const hashedPassword = await bcrypt.hash(password, 10);
       await sql`
             INSERT INTO users (Name, Email, Password)
-            VALUES (${email}, ${email}, ${hashedPassword})`;
+            VALUES (${name}, ${email}, ${hashedPassword})`;
     }
   } catch (error) {
-    if (error instanceof Error) {
-      return `${error.message}`;
-    }
-    return `Something went wrong`;
+    console.log('register user error', error);
+    return 'Something went wrong';
   }
-  redirect('/login');
+  await signIn('credentials', formData);
 }
