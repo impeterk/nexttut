@@ -4,8 +4,9 @@ import {z} from 'zod'
 import {sql} from '@vercel/postgres'
 import {revalidatePath} from "next/cache"
 import {redirect} from 'next/navigation'
-import {signIn} from "@/auth"
+import {getUser, signIn} from "@/auth"
 import {AuthError} from "next-auth"
+import bcrypt from 'bcrypt'
 
 const FormSchema = z.object({
     id: z.string(),
@@ -14,6 +15,8 @@ const FormSchema = z.object({
     status: z.enum(['pending', 'paid']),
     date: z.string()
 })
+
+
 
 const CreateInvoice = FormSchema.omit({id:true, date:true})
 
@@ -97,4 +100,26 @@ return {
         }
         throw error
     }
+  }
+
+  export async function registerUser(prevState: string |undefined, formData: FormData) {
+    try {
+        const email = formData.get('email') as string
+        const password = formData.get('password') as string
+        if (!email || !password) return 'No email or password provided'
+
+        const user = await getUser(email)
+        if (user) return 'User already exist'
+
+        const hashedPassword = await bcrypt.hash(password, 10)
+        const addUser = await sql`
+        INSERT INTO users (Name, Email, Password)
+        VALUES (${email}, ${email}, ${hashedPassword})`
+
+        
+    } catch (error) {
+        console.log(error)
+        return 'something went wrong'
+    }
+    redirect('/login')
   }
